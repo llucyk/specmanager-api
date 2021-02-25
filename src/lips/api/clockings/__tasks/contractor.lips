@@ -1,0 +1,10 @@
+lanzaInterfaz("api.logger", "", "");
+
+$_authMidResult = 0;
+lanzaInterfaz("api._authMiddleware", "", "");
+
+SI ($_authMidResult == 0) ENTONCES
+  lanzaInterfaz("api._authReject", "", "");
+SINO
+  lanzaInterfaz("getContractors", "", "");
+FIN;

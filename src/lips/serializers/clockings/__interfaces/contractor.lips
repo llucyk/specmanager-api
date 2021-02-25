@@ -1,0 +1,27 @@
+/**
+requiere:
+  - fuente de datos tipo 1 (query)
+  - vars: $_objects
+
+si se pasa una fuente con varios elementos, debe incluir manualmente
+preInterfaz => "[" y postInterfaz => "]"
+
+EJ:
+$_objects = "[";
+lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
+$_objects = $_objects + "]";
+*/
+
+SI ($_objects <> "[" Y $_objects <> "") ENTONCES
+  $_objects = $_objects + ", ";
+FIN;
+
+$_single = "{" +
+  "'id': " + campo("MARC_ID") + ", " +
+  "'center': '" + campo("MARC_CENTRO") + "', " +
+  "'ss': '" + campo("PERSO_CUIL") + "', " +
+  "'action': '" + campo("MARC_SENTIDO") + "', " +
+  "'datetime': '" + campo("MARC_FECHA") + "'" +
+  "}";
+
+$_objects = $_objects + $_single ;

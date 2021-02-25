@@ -1,0 +1,11 @@
+$msg = "Processing API request.";
+
+SI ($httpheader_user_agent <> "") ENTONCES
+  $msg = $msg + " User-Agent: " + $httpheader_user_agent + ".";
+FIN;
+
+SI ($httpheader_content_type <> "") ENTONCES
+  $msg = $msg + " Content-type: " + $httpheader_content_type + ".";
+FIN;
+
+informa($msg);
