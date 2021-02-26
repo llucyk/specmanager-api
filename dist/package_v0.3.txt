@@ -1,31 +1,27 @@
-﻿/####/Paquete:serializers/####/Paquete:serializers.generics/####/Paquete:serializers.clockings/####/Interfaz:contractor/####//**
-requiere:
-  - fuente de datos tipo 1 (query)
-  - vars: $_objects
-
-si se pasa una fuente con varios elementos, debe incluir manualmente
-preInterfaz => "[" y postInterfaz => "]"
-
-EJ:
-$_objects = "[";
-lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
-$_objects = $_objects + "]";
+﻿/####/Paquete:utils/####/Interfaz:counter/####//** 
+  requiere:
+    - fuente de datos de tipo "select count(*) as count from ..."
+  
+  returns*:
+    - $_count: cantidad de elementos en una variable
+    - $_pages: numero de paginas con base en 20 rpp
 */
+$rpp = 20 ;
+$_count = entero(campo("counting"));
 
-SI ($_objects <> "[" Y $_objects <> "") ENTONCES
-  $_objects = $_objects + ", ";
+// calcula paginas
+$_pages = $_count DIV $rpp ;
+
+SI ($_pages > 0) ENTONCES
+  SI (($_count MOD $rpp) > 0) ENTONCES
+    $_pages = $_pages + 1 ;
+  FIN;
+SINO
+  $_pages = 1 ;
 FIN;
-
-$_single = "{" +
-  "'id': " + campo("MARC_ID") + ", " +
-  "'center': '" + campo("MARC_CENTRO") + "', " +
-  "'ss': '" + campo("PERSO_CUIL") + "', " +
-  "'action': '" + campo("MARC_SENTIDO") + "', " +
-  "'datetime': '" + campo("MARC_FECHA") + "'" +
-  "}";
-
-$_objects = $_objects + $_single ;
-/####/Paquete:api/####/Interfaz:logger/####/$msg = "Processing API request.";
+/####/Paquete:api/####/Interfaz:_raise_400/####/$httpresult = 400 ;
+lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_raise_20x/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$body = "{'ok': true, 'error': null, 'response': " + $_response + "}";/####/Interfaz:logger/####/$msg = "Processing API request.";
 
 SI ($httpheader_user_agent <> "") ENTONCES
   $msg = $msg + " User-Agent: " + $httpheader_user_agent + ".";
@@ -35,58 +31,157 @@ SI ($httpheader_content_type <> "") ENTONCES
   $msg = $msg + " Content-type: " + $httpheader_content_type + ".";
 FIN;
 
-informa($msg);/####/Interfaz:_authReject/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 401 ;
+informa($msg);/####/Interfaz:check_token/####/// requirements: httpheader_authorization
+// $_token_valid: Result of auth checks
 
-$body = "{'ok': false, 'error': 'Credentials error or not provided.'}";/####/Interfaz:_authMiddleware/####/$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQ1MjI0MjU5LCJqdGkiOiIyYmQ1NjI3MmIzYjI0YjNmOGI1MjJlNThjMzdjMTdlMSIsInVzZXJfaWQiOjF9.D92tTuVi_YcNkJtiLGHtcn6tBcxLCBxz9FKD3qzhUg8";
+$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQ1MjI0MjU5LCJqdGkiOiIyYmQ1NjI3MmIzYjI0YjNmOGI1MjJlNThjMzdjMTdlMSIsInVzZXJfaWQiOjF9.D92tTuVi_YcNkJtiLGHtcn6tBcxLCBxz9FKD3qzhUg8";
 
 SI ($httpheader_authorization == "Bearer " + $token) ENTONCES
-  $_authMidResult = 1;
+  $_token_valid = 1;
 SINO
-  $_authMidResult = 0;
-FIN;/####/Tarea:getGreeting/####/lanzaInterfaz("logger", "", "");
-$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 200;
-$body = "{'result': 'Hello'}";/####/Paquete:api.employees/####/Tarea:employee/####/lanzaInterfaz("api.logger", "", "");
-$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 200;
-$body = "{'result': 'getting/posting own people'}";/####/Tarea:contractor/####/lanzaInterfaz("api.logger", "", "");
-$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 200;
-$body = "{'result': 'getting/posting contractor people'}";/####/Paquete:api.clockings/####/Interfaz:getContractors/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 200;
-
-$query = "SELECT TOP (1000) PERS_CODIGO as MARC_ID, PERS_TIPO as MARC_CENTRO, PERS_PILA as PERSO_CUIL, PERS_NOMBRE as MARC_SENTIDO, PERS_PERFIL as MARC_FECHA FROM PERSONAS";
-creaFuente("clockings", 1, $query, "");
-
-$_objects = "[";
-lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
-$_objects = $_objects + "]";
-
-$body = "{" +
-  "'ok': true, " +
-  "'error': null, " +
-  "'data': "+ $_objects +
-  "}";/####/Tarea:employee/####/lanzaInterfaz("api.logger", "", "");
-$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 200;
-$body = "{'result': 'getting employee clockings'}";/####/Tarea:contractor/####/lanzaInterfaz("api.logger", "", "");
-
-$_authMidResult = 0;
-lanzaInterfaz("api._authMiddleware", "", "");
-
-SI ($_authMidResult == 0) ENTONCES
-  lanzaInterfaz("api._authReject", "", "");
-SINO
-  lanzaInterfaz("getContractors", "", "");
+  $_token_valid = 0;
 FIN;
-/####/Paquete:api.auth/####/Tarea:logout/####/lanzaInterfaz("api.logger", "", "");
+/####/Interfaz:_raise_40x/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$body = "{'ok': false, 'error': '" + $_error + "'}";/####/Interfaz:_raise_200/####/$httpresult = 200 ;
+lanzaInterfaz("api._raise_20x", "", "");/####/Interfaz:_raise_401/####/$httpresult = 401 ;
+lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_authReject/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$httpresult = 401 ;
+
+$body = "{'ok': false, 'error': 'Credentials error or not provided.'}";/####/Tarea:getGreeting/####/informa("Hi");
+$_response = "'Hello world!'";
+lanzaInterfaz("_raise_200", "", "");/####/Paquete:api.auth/####/Tarea:logout/####/lanzaInterfaz("api.logger", "", "");
 $resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
 $httpresult = 200;
 $body = "{'result': 'logout...'}";/####/Tarea:login/####/lanzaInterfaz("api.logger", "", "");
 $resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
 $httpresult = 200;
-$body = "{'result': 'login...'}";/####/Paquete:portal/####/Interfaz:botones_gestor/####/ SI ($sf=="0016") ENTONCES $mb="";SINO $mb="f=N|";FSI;
+$body = "{'result': 'login...'}";/####/Paquete:api.clockings/####/Interfaz:getForContractors/####//** 
+  Crea fuente de datos y lanza interfaz para serializarlos y 
+  retornar la respuesta application/json
+  
+  httpparams:
+    from: datetime con formato AAAAMMDDHHMMSS
+    to: datetime con formato AAAAMMDDHHMMSS
+*/
+
+// set origen de marcajes
+SI ($httpparam_fromHistory == "true") ENTONCES
+  $origin = "HISTORICO";
+SINO
+  $origin = "MARCAJES";
+FIN;
+
+// cuenta de items y paginas
+$_count = 0 ;
+$_pages = 0 ;
+$query_pages = "SELECT count(*) as counting FROM " + $origin + 
+  " WHERE MARC_TMP BETWEEN '"+ $httpparam_from + "' AND '"+ $httpparam_to +"';";
+// crea para conteo
+creaFuente("counting", 1, $query_pages, "");
+lanzaInterfaz("utils.counter", "counting", "");
+
+// page process
+$page = 1 ; // default
+SI (esNumero($httpparam_page) Y entero($httpparam_page) >= 1) ENTONCES
+  $page = entero($httpparam_page) ;
+FIN;
+
+SI ($page > $_pages) ENTONCES
+  $_error = "Número de página  mayor al disponible";
+  lanzaInterfaz("api._raise_400", "", "");
+SINO
+  // results process
+  $res_start = ($page - 1) * 20 ;
+  $res_stop = $page * 20 ;
+
+  // query para crear la fuente
+  $query = "SELECT *" +
+    "FROM (SELECT ROW_NUMBER() OVER(ORDER BY MARC_TMP) AS RowNum, *" +
+      " FROM " + $origin +
+      " WHERE" +
+        " MARC_TMP BETWEEN '"+ $httpparam_from +"' AND '"+ $httpparam_to +"'" +
+    ") AS RowConstrainedResult" +
+    " WHERE" +
+      " RowNum > " + $res_start + " AND" +
+      " RowNum <= " + $res_stop + "" +
+    " ORDER BY RowNum" +
+    ";";
+
+  // crea fuente de marcajes
+  creaFuente("clockings", 1, $query, "");
+
+  // preparar serializado
+  $_serialize_employee = 0 ;
+  $_clockings_obj = "[";
+  lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
+  $_clockings_obj = $_clockings_obj + "]";
+
+  $_response = "{" +
+    "'count': " + $_count + ", " +
+    "'pages': " + $_pages + ", " +
+    "'clockings': "+ $_clockings_obj +
+    "}";
+    
+  lanzaInterfaz("api._raise_200", "", "");
+FIN;
+/####/Tarea:employee/####/lanzaInterfaz("api.logger", "", "");
+$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$httpresult = 200;
+$body = "{'result': 'getting employee clockings'}";/####/Tarea:contractor/####///lanzaInterfaz("api.logger", "", "");
+
+$_token_valid = 0;
+lanzaInterfaz("api.check_token", "", "");
+
+SI ($_token_valid == 0) ENTONCES
+  $_error = "Credentials invalid or not provided.";
+  lanzaInterfaz("api._raise_401", "", "");
+SINO
+  lanzaInterfaz("getForContractors", "", "");
+FIN;
+/####/Paquete:api.employees/####/Tarea:employee/####/lanzaInterfaz("api.logger", "", "");
+$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$httpresult = 200;
+$body = "{'result': 'getting/posting internal people'}";/####/Tarea:contractor/####/lanzaInterfaz("api.logger", "", "");
+$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$httpresult = 200;
+$body = "{'result': 'getting/posting contractor people'}";/####/Paquete:serializers/####/Paquete:serializers.employees/####/Interfaz:contractor/####/$a = 0;
+
+/####/Paquete:serializers.clockings/####/Interfaz:contractor/####//**
+requiere:
+  - fuente de datos tipo 1 (query)
+  - vars: $_clockings_obj
+
+si se pasa una fuente con varios elementos, debe incluir manualmente
+preInterfaz => "[" y postInterfaz => "]"
+
+EJ:
+$_clockings_obj = "[";
+lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
+$_clockings_obj = $_clockings_obj + "]";
+*/
+
+SI ($_clockings_obj <> "[" Y $_clockings_obj <> "") ENTONCES
+  $_clockings_obj = $_clockings_obj + ", ";
+FIN;
+
+$_single = "{" +
+  "'id': " + campo("MARC_COUNT") + ", " +
+  "'employee': " + campo("MARC_PERS") + ", " +
+  "'type': " + campo("MARC_TIPO") + ", " +
+  "'card': '" + campo("MARC_TARJ") + "', " +
+  "'tmp': '" + campo("MARC_TMP") + "', " +
+  "'result': " + campo("MARC_RESULT") + ", " +
+  "'offline': " + campo("MARC_OFFLINE") + ", " +
+  "'gl': " + campo("MARC_GL") + ", " +
+  "'reader': " + campo("MARC_LECT") + ", " +
+  "'aux': '" + campo("MARC_AUX") + "', " +
+  "'value': " + campo("MARC_VAL") + ", " +
+  "'terminal': " + campo("MARC_TERM") + ", " +
+  "'version': " + campo("MARC_VERS") + "" +
+  "}";
+
+// return* single lista de objetos
+$_clockings_obj = $_clockings_obj + $_single ;/####/Paquete:serializers.generics/####/Paquete:portal/####/Interfaz:botones_gestor/####/ SI ($sf=="0016") ENTONCES $mb="";SINO $mb="f=N|";FSI;
   ponComponente("0016_gen.html",str("mInformes",0),9,3,$mb+$i4);
 
  SI ($sf=="0022") ENTONCES $mb="";SINO $mb="f=N|";FSI;
@@ -671,7 +766,7 @@ campoObjetoCalculo("contador","HT");
 print(vc_nombre(0));
 clase_html="numero";print($v);clase_html="";
 
-cierraTablaHTML();/####/Lanzador:envio/####/$s=getVarHTTP("contexto");
+cierraTablaHTML();/####/Tarea:inicializacion/####/asociaSuceso("portal.menu","inicio_grafico");/####/Lanzador:envio/####/$s=getVarHTTP("contexto");
 $cv=recorta($s,1,1);
 $s=recorta($s,2,1000);
 COMPRUEBA ($cv)
@@ -681,7 +776,7 @@ FIN
 CASO ("E") ENTONCES
  lanzaInterfaz("portal.evacuacion.envio","","");
 FIN
-FSI;/####/Tarea:inicializacion/####/asociaSuceso("portal.menu","inicio_grafico");/####/Tarea:altas_portal/####/creaFuente("plantilla",2,"PERSONAL_PORTAL","");
+FSI;/####/Tarea:altas_portal/####/creaFuente("plantilla",2,"PERSONAL_PORTAL","");
 lanzaInterfaz("portal.pon_login","plantilla","");/####/Paquete:portal.utils/####/Interfaz:resumen_maximos_anuales/####/buscaContrato();
 $ch=campoContrato("ch");
 $ch_id=campoContrato("ch_id");
