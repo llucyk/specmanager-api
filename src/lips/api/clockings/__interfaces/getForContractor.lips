@@ -1,0 +1,69 @@
+/** 
+  Crea fuente de datos y lanza interfaz para serializarlos y 
+  retornar la respuesta application/json
+  
+  httpparams:
+    from: datetime con formato AAAAMMDDHHMMSS
+    to: datetime con formato AAAAMMDDHHMMSS
+*/
+
+// set origen de marcajes
+SI ($httpparam_fromHistory == "true") ENTONCES
+  $origin = "HISTORICO";
+SINO
+  $origin = "MARCAJES";
+FIN;
+
+// cuenta de items y paginas
+$_count = 0 ;
+$_pages = 0 ;
+$query_pages = "SELECT count(*) as counting FROM " + $origin + 
+  " WHERE MARC_TMP BETWEEN '"+ $httpparam_from + "' AND '"+ $httpparam_to +"';";
+// crea para conteo
+creaFuente("counting", 1, $query_pages, "");
+lanzaInterfaz("utils.counter", "counting", "");
+
+// page process
+$page = 1 ; // default
+SI (esNumero($httpparam_page) Y entero($httpparam_page) >= 1) ENTONCES
+  $page = entero($httpparam_page) ;
+FIN;
+
+SI ($page > $_pages) ENTONCES
+  $_error = "Número de página  mayor al disponible";
+  lanzaInterfaz("api._raise_400", "", "");
+SINO
+  // results process
+  $res_start = ($page - 1) * 20 ;
+  $res_stop = $page * 20 ;
+
+  // query para crear la fuente
+  $query = "SELECT *" +
+    "FROM (SELECT ROW_NUMBER() OVER(ORDER BY MARC_TMP) AS RowNum, *" +
+      " FROM " + $origin +
+      " WHERE" +
+        " MARC_TMP BETWEEN '"+ $httpparam_from +"' AND '"+ $httpparam_to +"'" +
+    ") AS RowConstrainedResult" +
+    " WHERE" +
+      " RowNum > " + $res_start + " AND" +
+      " RowNum <= " + $res_stop + "" +
+    " ORDER BY RowNum" +
+    ";";
+
+  // crea fuente de marcajes
+  creaFuente("clockings", 1, $query, "");
+
+  // preparar serializado
+  $_serialize_employee = 0 ;
+  $_clockings_obj = "[";
+  lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
+  $_clockings_obj = $_clockings_obj + "]";
+
+  $_response = "{" +
+    "'count': " + $_count + ", " +
+    "'pages': " + $_pages + ", " +
+    "'clockings': "+ $_clockings_obj +
+    "}";
+    
+  lanzaInterfaz("api._raise_200", "", "");
+FIN;

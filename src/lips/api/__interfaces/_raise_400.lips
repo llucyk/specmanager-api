@@ -1,0 +1,2 @@
+$httpresult = 400 ;
+lanzaInterfaz("api._raise_40x", "", "");

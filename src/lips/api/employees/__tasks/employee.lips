@@ -1,0 +1,4 @@
+lanzaInterfaz("api.logger", "", "");
+$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$httpresult = 200;
+$body = "{'result': 'getting/posting own people'}";

@@ -1,0 +1,2 @@
+$httpresult = 200 ;
+lanzaInterfaz("api._raise_20x", "", "");

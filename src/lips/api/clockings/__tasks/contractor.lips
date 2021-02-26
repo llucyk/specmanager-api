@@ -1,10 +1,11 @@
-lanzaInterfaz("api.logger", "", "");
+//lanzaInterfaz("api.logger", "", "");
 
-$_authMidResult = 0;
-lanzaInterfaz("api._authMiddleware", "", "");
+$_token_valid = 0;
+lanzaInterfaz("api.check_token", "", "");
 
-SI ($_authMidResult == 0) ENTONCES
-  lanzaInterfaz("api._authReject", "", "");
+SI ($_token_valid == 0) ENTONCES
+  $_error = "Credentials invalid or not provided.";
+  lanzaInterfaz("api._raise_401", "", "");
 SINO
-  lanzaInterfaz("getContractors", "", "");
+  lanzaInterfaz("getForContractors", "", "");
 FIN;

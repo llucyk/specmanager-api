@@ -1,12 +1,10 @@
-informa("Auth middleware");
-
-// requirements:
-// $_authMidResult: Result of auth checks
+// requirements: httpheader_authorization
+// $_token_valid: Result of auth checks
 
 $token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQ1MjI0MjU5LCJqdGkiOiIyYmQ1NjI3MmIzYjI0YjNmOGI1MjJlNThjMzdjMTdlMSIsInVzZXJfaWQiOjF9.D92tTuVi_YcNkJtiLGHtcn6tBcxLCBxz9FKD3qzhUg8";
 
 SI ($httpheader_authorization == "Bearer " + $token) ENTONCES
-  $_authMidResult = 1;
+  $_token_valid = 1;
 SINO
-  $_authMidResult = 0;
+  $_token_valid = 0;
 FIN;

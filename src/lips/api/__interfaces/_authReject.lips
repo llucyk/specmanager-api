@@ -1,4 +1,0 @@
-$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 401 ;
-
-$body = "{'ok': false, 'error': 'Credentials error or not provided.'}";

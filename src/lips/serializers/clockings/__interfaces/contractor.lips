@@ -1,27 +1,36 @@
 /**
 requiere:
   - fuente de datos tipo 1 (query)
-  - vars: $_objects
+  - vars: $_clockings_obj
 
 si se pasa una fuente con varios elementos, debe incluir manualmente
 preInterfaz => "[" y postInterfaz => "]"
 
 EJ:
-$_objects = "[";
+$_clockings_obj = "[";
 lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
-$_objects = $_objects + "]";
+$_clockings_obj = $_clockings_obj + "]";
 */
 
-SI ($_objects <> "[" Y $_objects <> "") ENTONCES
-  $_objects = $_objects + ", ";
+SI ($_clockings_obj <> "[" Y $_clockings_obj <> "") ENTONCES
+  $_clockings_obj = $_clockings_obj + ", ";
 FIN;
 
 $_single = "{" +
-  "'id': " + campo("MARC_ID") + ", " +
-  "'center': '" + campo("MARC_CENTRO") + "', " +
-  "'ss': '" + campo("PERSO_CUIL") + "', " +
-  "'action': '" + campo("MARC_SENTIDO") + "', " +
-  "'datetime': '" + campo("MARC_FECHA") + "'" +
+  "'id': " + campo("MARC_COUNT") + ", " +
+  "'employee': " + campo("MARC_PERS") + ", " +
+  "'type': " + campo("MARC_TIPO") + ", " +
+  "'card': '" + campo("MARC_TARJ") + "', " +
+  "'tmp': '" + campo("MARC_TMP") + "', " +
+  "'result': " + campo("MARC_RESULT") + ", " +
+  "'offline': " + campo("MARC_OFFLINE") + ", " +
+  "'gl': " + campo("MARC_GL") + ", " +
+  "'reader': " + campo("MARC_LECT") + ", " +
+  "'aux': '" + campo("MARC_AUX") + "', " +
+  "'value': " + campo("MARC_VAL") + ", " +
+  "'terminal': " + campo("MARC_TERM") + ", " +
+  "'version': " + campo("MARC_VERS") + "" +
   "}";
 
-$_objects = $_objects + $_single ;
+// return* single lista de objetos
+$_clockings_obj = $_clockings_obj + $_single ;
