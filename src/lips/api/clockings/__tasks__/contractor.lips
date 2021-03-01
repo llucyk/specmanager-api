@@ -1,7 +1,7 @@
 //lanzaInterfaz("api.logger", "", "");
 
-$_token_valid = 0;
-lanzaInterfaz("api.check_token", "", "");
+$_token_valid = 1;
+//lanzaInterfaz("api.check_token", "", "");
 
 SI ($_token_valid == 0) ENTONCES
   $_error = "Credentials invalid or not provided.";

@@ -1,0 +1,42 @@
+/** 
+  Serializa los datos opcionales de una persona
+  segun indique la variable $_optionals
+  
+  La salida se serializa en $_optionals_data
+*/
+
+SI ($_optionals <> "") ENTONCES
+  $pos = buscaTexto($_optionals, ",");
+  SI ($pos) ENTONCES
+    // obtiene el id y recorta la porción de texto
+    $dato_id = recorta($_optionals, 1, $pos -1);
+    $_optionals = recorta($_optionals, $pos +1, length($_optionals));
+  SINO
+    // se entiende que existe 1 solo id
+    $dato_id = $_optionals ;
+    $_optionals = "";
+  FIN ;
+  
+  // get data value
+  $data_value = campoPersona("dato_opcional" + $dato_id);
+  
+  SI ($data_value <> "") ENTONCES
+    $single = "{" + 
+      "'id': " + $dato_id + ", " +
+      "'value': '" + campoPersona("dato_opcional" + $dato_id) + "'" +
+      "}";
+    $_optionals_data = $_optionals_data + $single ;
+  FIN;
+  
+  // mas datos por serializar
+  SI ($_optionals <> "") ENTONCES
+    // si tiene valor asignado
+    SI ($data_value <> "") ENTONCES
+      $_optionals_data = $_optionals_data + ", ";
+    FIN;
+    lanzaInterfaz("serializers.generics.optionalData", "", "");
+  FIN ;
+  
+SINO
+  $_optionals_data = $_optionals_data + "]";
+FIN ;

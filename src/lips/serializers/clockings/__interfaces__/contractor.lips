@@ -16,9 +16,27 @@ SI ($_clockings_obj <> "[" Y $_clockings_obj <> "") ENTONCES
   $_clockings_obj = $_clockings_obj + ", ";
 FIN;
 
+
+SI ($_serialize_employee) ENTONCES
+  tipo_persona = campo("MARC_APP");
+  codigo = campo("MARC_PERS");
+  
+  SI (buscaPersonaPorCodigo()) ENTONCES
+    $_contractor_obj = "";
+    lanzaInterfaz("serializers.employees.contractor", "", "");
+  SINO
+    // persona no encontrada
+    $_contractor_obj = "{'code': " + campo("MARC_PERS") + "}";
+  FIN;
+  
+  $employee = $_contractor_obj ;
+SINO
+  $employee = campo("MARC_PERS");
+FIN;
+
 $_single = "{" +
   "'id': " + campo("MARC_COUNT") + ", " +
-  "'employee': " + campo("MARC_PERS") + ", " +
+  "'employee': " + $employee + ", " +
   "'type': " + campo("MARC_TIPO") + ", " +
   "'card': '" + campo("MARC_TARJ") + "', " +
   "'tmp': '" + campo("MARC_TMP") + "', " +

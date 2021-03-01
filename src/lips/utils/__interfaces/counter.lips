@@ -6,14 +6,14 @@
     - $_count: cantidad de elementos en una variable
     - $_pages: numero de paginas con base en 20 rpp
 */
-$rpp = 20 ;
+$_pageSize = 20 ;
 $_count = entero(campo("counting"));
 
 // calcula paginas
-$_pages = $_count DIV $rpp ;
+$_pages = $_count DIV $_pageSize ;
 
 SI ($_pages > 0) ENTONCES
-  SI (($_count MOD $rpp) > 0) ENTONCES
+  SI (($_count MOD $_pageSize) > 0) ENTONCES
     $_pages = $_pages + 1 ;
   FIN;
 SINO

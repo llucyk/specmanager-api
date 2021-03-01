@@ -1,0 +1,30 @@
+/** 
+  Requiere: persona encontrada por buscaPersonaPorCodigo() o similar
+  
+  ** Solo serializa una persona
+*/
+
+SI ($_contractor_obj <> "[" Y $_contractor_obj <> "") ENTONCES
+  $_contractor_obj = $_contractor_obj + ", ";
+FIN;
+
+$_optionals = "1,2";
+$_optionals_data = "[";
+lanzaInterfaz("serializers.generics.optionalData", "", "");
+$_optionals_data = $_optionals_data + "]";
+
+$_single = "{" +
+  "'code': " + campoPersona("codigo") + ", " +
+  "'mat': '" + campoPersona("matricula") + "', " +
+  "'card': '" + campoPersona("tarjeta") + "', " +
+  "'centerCode': '" + campoPersona("centro") + "', " +
+  "'centerDesc': '" + campoPersona("centro_desc") + "', " +
+  "'firstname': '" + campoPersona("nombre") + "', " +
+  "'lastName': '" + campoPersona("apellidos") + "', " +
+  "'dni': '" + campoPersona("dni") + "', " +
+  "'company': '" + campoPersona("empresa") + "', " +
+  "'optionalData': " + $_optionals_data +
+  "}";
+
+// return* single lista de objetos
+$_contractor_obj = $_contractor_obj + $_single ;
