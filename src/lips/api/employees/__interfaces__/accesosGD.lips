@@ -1,0 +1,43 @@
+/** 
+  Da acceso a contratistas a los centros especificados
+  en el parametro "centers"
+*/
+
+SI ($httpparam_centers <> "") ENTONCES
+  // split de centros
+  $pos = buscaTexto($httpparam_centers, ",");
+  SI ($pos) ENTONCES
+    // obtiene el id y recorta la porción de texto
+    $splitted = quitaBlancos(recorta($httpparam_centers, 1, $pos -1));
+    $httpparam_centers = recorta($httpparam_centers, $pos +1, length($httpparam_centers));
+  SINO
+    // se entiende que existe 1 solo id
+    $splitted = quitaBlancos($httpparam_centers);
+    $httpparam_centers = "";
+  FIN ;
+  
+  // parse centros
+  $pos_dp = buscaTexto($splitted, ":");
+  SI ($pos_dp == 0) ENTONCES
+    $_error = "Error parsing centers.";
+    lanzaInterfaz("api._raise_400", "", "");
+  SINO
+    $parsed_center = recorta($splitted, 1, $pos_dp -1);
+    $parsed_date = recorta($splitted, $pos_dp +1, length($splitted));
+    
+    // busca el centro
+    SI (buscaCentro($parsed_center, 1) == 0) ENTONCES
+      $_error = "Center " + $parsed_center + " not found.";
+      lanzaInterfaz("api._raise_404", "", "");
+    SINO
+      // centro disponible en variable global centro
+      fecha_fin = a_fecha($parsed_date);
+      accesoDocumental(1);
+    FIN;
+  FIN;
+  
+  // llama a si mismo
+  SI ($_error == "") ENTONCES
+    lanzaInterfaz("api.employees.accesosGD", "", "");
+  FIN;
+FIN;

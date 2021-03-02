@@ -1,11 +1,16 @@
 //lanzaInterfaz("api.logger", "", "");
 
-$_token_valid = 1;
+$_token_valid = 1 ;
 //lanzaInterfaz("api.check_token", "", "");
 
 SI ($_token_valid == 0) ENTONCES
   $_error = "Credentials invalid or not provided.";
   lanzaInterfaz("api._raise_401", "", "");
 SINO
-  lanzaInterfaz("getForContractors", "", "");
+  SI ($httpmethod == "GET") ENTONCES
+    lanzaInterfaz("api.clockings.getForContractors", "", "");
+  SINO
+    // default
+    lanzaInterfaz("api._raise_405", "", "");
+  FIN;
 FIN;

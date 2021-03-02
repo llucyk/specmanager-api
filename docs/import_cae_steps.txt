@@ -1,0 +1,18 @@
+1. buscar empresa
+	a. actualizar nombre
+	b.crear si no existe
+
+2. buscar empleado
+	a. Crear con dni, apell, nomb
+	b. actualizar dni, apell, nombr
+3. asignar empresa
+4. actualiza campo EMP_FIN en tabla EMPL_EMPR para la persona y empresa --> implicito en ponEmpresa()
+5. Si no se actualizó ninguna fila, inserta con EMP_INI = fecha actualiza
+6. Si la persona esta de baja, ponerla de alta
+
+7. por cada centro:
+  a. buscar centro
+  b. log error si no se encuentra
+  c. si la fecha de baja es mayor al dia actual:
+    i) actualiza fecha de fin con la recibida en tabla ACCESO_GD
+    ii) si no existe registro, insertarlo con inicio = fecha actual

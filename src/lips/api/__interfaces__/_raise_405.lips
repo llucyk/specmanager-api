@@ -1,0 +1,3 @@
+$httpresult = 405 ;
+$_error = "Method is not allowed.";
+lanzaInterfaz("api._raise_40x", "", "");

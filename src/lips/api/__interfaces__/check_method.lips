@@ -1,0 +1,13 @@
+/** 
+  Busca si el método de la petición se encuentra en la variable
+  $_allowed_methods ==> Format :method1:method2:...:methodN:
+  
+  Resultado en variable 
+  $_is_valid_method
+*/
+
+SI (buscaTexto($_allowed_methods, ":" + $httpmethod + ":") == 0) ENTONCES
+  $_is_valid_method = 0 ;
+SINO
+  $_is_valid_method = 1 ;
+FIN;

@@ -8,9 +8,12 @@ SI ($_contractor_obj <> "[" Y $_contractor_obj <> "") ENTONCES
   $_contractor_obj = $_contractor_obj + ", ";
 FIN;
 
-$_optionals = "1,2";
+// set vars
 $_optionals_data = "[";
-lanzaInterfaz("serializers.generics.optionalData", "", "");
+$_optionals = "" + $httpparam_employeeData ;
+SI ($_optionals <> "") ENTONCES
+  lanzaInterfaz("serializers.generics.optionalData", "", "");
+FIN;
 $_optionals_data = $_optionals_data + "]";
 
 $_single = "{" +

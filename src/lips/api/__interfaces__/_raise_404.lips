@@ -1,0 +1,2 @@
+$httpresult = 404 ;
+lanzaInterfaz("api._raise_40x", "", "");

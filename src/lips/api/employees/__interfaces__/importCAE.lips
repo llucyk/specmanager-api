@@ -1,0 +1,55 @@
+/** 
+  Importa una persona y empresa con los datos recibidos
+*/
+
+$last_date = "20501231";
+
+// busca o crea empresa
+cif_empresa = $httpparam_companyCode ;
+SI (indefinido($httpparam_companyName)) ENTONCES
+  nombre_empresa = "Empresa " + $httpparam_companyCode ;
+SINO 
+  nombre_empresa = $httpparam_companyName ;
+FIN;
+
+SI (buscaEmpresaPorCIF() == 0) ENTONCES
+  creaEmpresa();
+SINO
+  modificaEmpresa();
+FIN;
+// variable gobal empresa ahora esta disponible
+
+// busca o crea la persona
+tipo_persona = 6 ;
+codigo = $httpparam_code ;
+dni = $httpparam_nif ;
+apellidos = $httpparam_lastName ;
+nombre = $httpparam_firstName ;
+
+SI (buscaPersonaPorDNI() == 0) ENTONCES
+  creaPersona();
+SINO
+  modificaPersona();
+FIN;
+
+// asigna empresa
+fecha_inicio = a_fecha(hoy());
+fecha_fin = $last_date ;
+ponEmpresa();
+
+// actualiza el estado
+// TODO: Evaluar con campo "isActive"
+fecha = a_fecha(hoy());
+SI (getEstadoAlta(fecha) == 0) ENTONCES
+  ponAlta();
+FIN;
+
+// procesa centros recursivamente
+$_error = "";
+lanzaInterfaz("api.employees.accesosGD", "", "");
+
+SI ($_error == "") ENTONCES
+// retorna mensaje de respuesta
+$_response = "'Datos importados correctamente.'";
+lanzaInterfaz("api._raise_200", "", "");
+FIN;

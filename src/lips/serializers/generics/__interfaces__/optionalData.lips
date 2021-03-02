@@ -9,11 +9,11 @@ SI ($_optionals <> "") ENTONCES
   $pos = buscaTexto($_optionals, ",");
   SI ($pos) ENTONCES
     // obtiene el id y recorta la porción de texto
-    $dato_id = recorta($_optionals, 1, $pos -1);
+    $dato_id = quitaBlancos(recorta($_optionals, 1, $pos -1));
     $_optionals = recorta($_optionals, $pos +1, length($_optionals));
   SINO
     // se entiende que existe 1 solo id
-    $dato_id = $_optionals ;
+    $dato_id = quitaBlancos($_optionals);
     $_optionals = "";
   FIN ;
   
@@ -38,5 +38,5 @@ SI ($_optionals <> "") ENTONCES
   FIN ;
   
 SINO
-  $_optionals_data = $_optionals_data + "]";
+  //$_optionals_data = $_optionals_data + "]";
 FIN ;
