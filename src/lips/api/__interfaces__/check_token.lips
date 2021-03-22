@@ -1,10 +1,17 @@
 // requirements: httpheader_authorization
 // $_token_valid: Result of auth checks
 
-$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQ1MjI0MjU5LCJqdGkiOiIyYmQ1NjI3MmIzYjI0YjNmOGI1MjJlNThjMzdjMTdlMSIsInVzZXJfaWQiOjF9.D92tTuVi_YcNkJtiLGHtcn6tBcxLCBxz9FKD3qzhUg8";
+$_token = "";
 
-SI ($httpheader_authorization == "Bearer " + $token) ENTONCES
-  $_token_valid = 1;
+// crea fuente obteniendo apikey desde bbdd
+$query = "SELECT TOP(1) * FROM STATIC WHERE STA_VAR = 'APIKEY' OR STA_VAR = 'apikey';";
+creaFuente("akf", 1, $query, "");
+
+// lanza interfaz para asignar valor a variable "token"
+lanzaInterfaz("api.token_assign", "akf", "");
+
+SI ($httpheader_apikey == $_token) ENTONCES
+  $_token_valid = 1 ;
 SINO
-  $_token_valid = 0;
+  $_token_valid = 0 ;
 FIN;

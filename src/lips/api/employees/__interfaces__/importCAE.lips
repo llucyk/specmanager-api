@@ -40,9 +40,19 @@ ponEmpresa();
 // actualiza el estado
 // TODO: Evaluar con campo "isActive"
 fecha = a_fecha(hoy());
-SI (getEstadoAlta(fecha) == 0) ENTONCES
-  ponAlta();
+SI ($httpparam_isActive == "false" O $httpparam_isActive == "False" O $httpparam_isActive == "0") ENTONCES
+  SI (getEstadoAlta(fecha) == 1) ENTONCES
+    ponBaja();
+  FIN;
+SINO
+  SI (getEstadoAlta(fecha) == 0) ENTONCES
+    ponAlta();
+  FIN;
 FIN;
+
+// procesa centros recursivamente
+$_error = "";
+lanzaInterfaz("api.employees.optionalData", "", "");
 
 // procesa centros recursivamente
 $_error = "";

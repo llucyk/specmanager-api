@@ -1,0 +1,3 @@
+// asigna token con fuente de datos
+
+$_token = campo("STA_VAL");

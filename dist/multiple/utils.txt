@@ -1,0 +1,22 @@
+﻿Paquete:utils/####/Interfaz:counter/####//** 
+  requiere:
+    - fuente de datos de tipo "select count(*) as count from ..."
+    - $_pageSize
+  
+  returns*:
+    - $_count: cantidad de elementos en una variable
+    - $_pages: numero de paginas con base en 20 rpp
+*/
+//$_pageSize = 20 ;
+$_count = entero(campo("counting"));
+
+// calcula paginas
+$_pages = $_count DIV $_pageSize ;
+
+SI ($_pages > 0) ENTONCES
+  SI (($_count MOD $_pageSize) > 0) ENTONCES
+    $_pages = $_pages + 1 ;
+  FIN;
+SINO
+  $_pages = 1 ;
+FIN;

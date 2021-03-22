@@ -10,7 +10,7 @@
 $pers_app = 9 ;
 
 // set origen de marcajes
-SI ($httpparam_fromHistory == "true") ENTONCES
+SI ($httpparam_fromHistory == "true" O $httpparam_fromHistory == "True") ENTONCES
   $origin = "HISTORICO";
 SINO
   $origin = "MARCAJES";
@@ -65,7 +65,7 @@ SINO
   creaFuente("clockings", 1, $query, "");
   
   // include employee detail ?
-  SI ($httpparam_employeeDetail == "true") ENTONCES
+  SI ($httpparam_employeeDetail == "true" O $httpparam_employeeDetail == "True") ENTONCES
     $_serialize_employee = 1 ;
   SINO
     $_serialize_employee = 0 ;

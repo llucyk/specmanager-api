@@ -1,0 +1,36 @@
+/** 
+  Importa datos opcionales recibido en el parametro
+  "optionalData".
+*/
+
+SI ($httpparam_optionalData <> "") ENTONCES
+  // split de centros
+  $pos = buscaTexto($httpparam_optionalData, ",");
+  SI ($pos) ENTONCES
+    // obtiene el id y recorta la porción de texto
+    $splitted = quitaBlancos(recorta($httpparam_optionalData, 1, $pos -1));
+    $httpparam_optionalData = recorta($httpparam_optionalData, $pos +1, length($httpparam_optionalData));
+  SINO
+    // se entiende que existe 1 solo id
+    $splitted = quitaBlancos($httpparam_optionalData);
+    $httpparam_optionalData = "";
+  FIN ;
+  
+  // parse centros
+  $pos_dp = buscaTexto($splitted, ":");
+  SI ($pos_dp == 0) ENTONCES
+    $_error = "Error parsing optional data.";
+    lanzaInterfaz("api._raise_400", "", "");
+  SINO
+    $parsed_id = recorta($splitted, 1, $pos_dp -1);
+    $parsed_value = recorta($splitted, $pos_dp +1, length($splitted));
+    
+    // actualiza dato
+    modificaDatoOpcional($parsed_value, a_entero($parsed_id));
+  FIN;
+  
+  // llama a si mismo
+  SI ($_error == "") ENTONCES
+    lanzaInterfaz("api.employees.accesosGD", "", "");
+  FIN;
+FIN;

@@ -1,27 +1,56 @@
 ﻿/####/Paquete:utils/####/Interfaz:counter/####//** 
   requiere:
     - fuente de datos de tipo "select count(*) as count from ..."
+    - $_pageSize
   
   returns*:
     - $_count: cantidad de elementos en una variable
     - $_pages: numero de paginas con base en 20 rpp
 */
-$rpp = 20 ;
+//$_pageSize = 20 ;
 $_count = entero(campo("counting"));
 
 // calcula paginas
-$_pages = $_count DIV $rpp ;
+$_pages = $_count DIV $_pageSize ;
 
 SI ($_pages > 0) ENTONCES
-  SI (($_count MOD $rpp) > 0) ENTONCES
+  SI (($_count MOD $_pageSize) > 0) ENTONCES
     $_pages = $_pages + 1 ;
   FIN;
 SINO
   $_pages = 1 ;
 FIN;
-/####/Paquete:api/####/Interfaz:_raise_400/####/$httpresult = 400 ;
-lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_raise_20x/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$body = "{'ok': true, 'error': null, 'response': " + $_response + "}";/####/Interfaz:logger/####/$msg = "Processing API request.";
+/####/Paquete:api/####/Interfaz:_raise_405/####/$httpresult = 405 ;
+$_error = "Method "+ $httpmethod +" is not allowed.";
+lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_raise_404/####/$httpresult = 404 ;
+lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:token_assign/####/// asigna token con fuente de datos
+
+$_token = campo("STA_VAL");/####/Interfaz:_raise_40x/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$body = "{'ok': false, 'error': '" + $_error + "'}";/####/Interfaz:check_token/####/// requirements: httpheader_authorization
+// $_token_valid: Result of auth checks
+
+$_token = "";
+
+// crea fuente obteniendo apikey desde bbdd
+$query = "SELECT TOP(1) * FROM STATIC WHERE STA_VAR = 'APIKEY' OR STA_VAR = 'apikey';";
+creaFuente("akf", 1, $query, "");
+
+// lanza interfaz para asignar valor a variable "token"
+lanzaInterfaz("api.token_assign", "akf", "");
+
+SI ($httpheader_apikey == $_token) ENTONCES
+  $_token_valid = 1 ;
+SINO
+  $_token_valid = 0 ;
+FIN;
+/####/Interfaz:_raise_401/####/$httpresult = 401 ;
+lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_raise_400/####/$httpresult = 400 ;
+lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_authReject/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$httpresult = 401 ;
+
+$body = "{'ok': false, 'error': 'Credentials error or not provided.'}";/####/Interfaz:_raise_20x/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$body = "{'ok': true, 'error': null, 'response': " + $_response + "}";/####/Interfaz:_raise_200/####/$httpresult = 200 ;
+lanzaInterfaz("api._raise_20x", "", "");/####/Interfaz:logger/####/$msg = "Processing API request.";
 
 SI ($httpheader_user_agent <> "") ENTONCES
   $msg = $msg + " User-Agent: " + $httpheader_user_agent + ".";
@@ -31,23 +60,20 @@ SI ($httpheader_content_type <> "") ENTONCES
   $msg = $msg + " Content-type: " + $httpheader_content_type + ".";
 FIN;
 
-informa($msg);/####/Interfaz:check_token/####/// requirements: httpheader_authorization
-// $_token_valid: Result of auth checks
+informa($msg);/####/Interfaz:check_method/####//** 
+  Busca si el método de la petición se encuentra en la variable
+  $_allowed_methods ==> Format :method1:method2:...:methodN:
+  
+  Resultado en variable 
+  $_is_valid_method
+*/
 
-$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQ1MjI0MjU5LCJqdGkiOiIyYmQ1NjI3MmIzYjI0YjNmOGI1MjJlNThjMzdjMTdlMSIsInVzZXJfaWQiOjF9.D92tTuVi_YcNkJtiLGHtcn6tBcxLCBxz9FKD3qzhUg8";
-
-SI ($httpheader_authorization == "Bearer " + $token) ENTONCES
-  $_token_valid = 1;
+SI (buscaTexto($_allowed_methods, ":" + $httpmethod + ":") == 0) ENTONCES
+  $_is_valid_method = 0 ;
 SINO
-  $_token_valid = 0;
+  $_is_valid_method = 1 ;
 FIN;
-/####/Interfaz:_raise_40x/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$body = "{'ok': false, 'error': '" + $_error + "'}";/####/Interfaz:_raise_200/####/$httpresult = 200 ;
-lanzaInterfaz("api._raise_20x", "", "");/####/Interfaz:_raise_401/####/$httpresult = 401 ;
-lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_authReject/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 401 ;
-
-$body = "{'ok': false, 'error': 'Credentials error or not provided.'}";/####/Tarea:getGreeting/####/informa("Hi");
+/####/Tarea:getGreeting/####/informa("Hi");
 $_response = "'Hello world!'";
 lanzaInterfaz("_raise_200", "", "");/####/Paquete:api.auth/####/Tarea:logout/####/lanzaInterfaz("api.logger", "", "");
 $resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
@@ -64,26 +90,36 @@ $body = "{'result': 'login...'}";/####/Paquete:api.clockings/####/Interfaz:getFo
     to: datetime con formato AAAAMMDDHHMMSS
 */
 
+$pers_app = 9 ;
+
 // set origen de marcajes
-SI ($httpparam_fromHistory == "true") ENTONCES
+SI ($httpparam_fromHistory == "true" O $httpparam_fromHistory == "True") ENTONCES
   $origin = "HISTORICO";
 SINO
   $origin = "MARCAJES";
+FIN;
+
+// pageSize
+$_pageSize = 20 ; // default
+SI (esNumero($httpparam_pageSize) Y a_entero($httpparam_pageSize) > 9 Y a_entero($httpparam_pageSize) < 501) ENTONCES
+  $_pageSize = a_entero($httpparam_pageSize);
 FIN;
 
 // cuenta de items y paginas
 $_count = 0 ;
 $_pages = 0 ;
 $query_pages = "SELECT count(*) as counting FROM " + $origin + 
-  " WHERE MARC_TMP BETWEEN '"+ $httpparam_from + "' AND '"+ $httpparam_to +"';";
+  " WHERE MARC_TMP BETWEEN '"+ $httpparam_from + "' AND '"+ $httpparam_to +"' AND " + 
+  " MARC_APP = " + $pers_app +
+  ";";
 // crea para conteo
 creaFuente("counting", 1, $query_pages, "");
 lanzaInterfaz("utils.counter", "counting", "");
 
 // page process
 $page = 1 ; // default
-SI (esNumero($httpparam_page) Y entero($httpparam_page) >= 1) ENTONCES
-  $page = entero($httpparam_page) ;
+SI (esNumero($httpparam_page) Y a_entero($httpparam_page) >= 1) ENTONCES
+  $page = a_entero($httpparam_page) ;
 FIN;
 
 SI ($page > $_pages) ENTONCES
@@ -91,15 +127,16 @@ SI ($page > $_pages) ENTONCES
   lanzaInterfaz("api._raise_400", "", "");
 SINO
   // results process
-  $res_start = ($page - 1) * 20 ;
-  $res_stop = $page * 20 ;
+  $res_start = ($page - 1) * $_pageSize ;
+  $res_stop = $page * $_pageSize ;
 
   // query para crear la fuente
   $query = "SELECT *" +
     "FROM (SELECT ROW_NUMBER() OVER(ORDER BY MARC_TMP) AS RowNum, *" +
       " FROM " + $origin +
       " WHERE" +
-        " MARC_TMP BETWEEN '"+ $httpparam_from +"' AND '"+ $httpparam_to +"'" +
+        " MARC_TMP BETWEEN '"+ $httpparam_from +"' AND '"+ $httpparam_to +"' AND" +
+        " MARC_APP = " + $pers_app +
     ") AS RowConstrainedResult" +
     " WHERE" +
       " RowNum > " + $res_start + " AND" +
@@ -109,9 +146,15 @@ SINO
 
   // crea fuente de marcajes
   creaFuente("clockings", 1, $query, "");
+  
+  // include employee detail ?
+  SI ($httpparam_employeeDetail == "true" O $httpparam_employeeDetail == "True") ENTONCES
+    $_serialize_employee = 1 ;
+  SINO
+    $_serialize_employee = 0 ;
+  FIN;
 
   // preparar serializado
-  $_serialize_employee = 0 ;
   $_clockings_obj = "[";
   lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
   $_clockings_obj = $_clockings_obj + "]";
@@ -129,23 +172,219 @@ $resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
 $httpresult = 200;
 $body = "{'result': 'getting employee clockings'}";/####/Tarea:contractor/####///lanzaInterfaz("api.logger", "", "");
 
-$_token_valid = 0;
+$_token_valid = 1 ;
+//lanzaInterfaz("api.check_token", "", "");
+
+SI ($_token_valid == 0) ENTONCES
+  $_error = "Credentials invalid or not provided.";
+  lanzaInterfaz("api._raise_401", "", "");
+SINO
+  SI ($httpmethod == "GET") ENTONCES
+    lanzaInterfaz("api.clockings.getForContractors", "", "");
+  SINO
+    // default
+    lanzaInterfaz("api._raise_405", "", "");
+  FIN;
+FIN;
+/####/Paquete:api.employees/####/Interfaz:importCAE/####//** 
+  Importa una persona y empresa con los datos recibidos
+*/
+
+$last_date = "20501231";
+
+// busca o crea empresa
+cif_empresa = $httpparam_companyCode ;
+SI (indefinido($httpparam_companyName)) ENTONCES
+  nombre_empresa = "Empresa " + $httpparam_companyCode ;
+SINO 
+  nombre_empresa = $httpparam_companyName ;
+FIN;
+
+SI (buscaEmpresaPorCIF() == 0) ENTONCES
+  creaEmpresa();
+SINO
+  modificaEmpresa();
+FIN;
+// variable gobal empresa ahora esta disponible
+
+// busca o crea la persona
+tipo_persona = 6 ;
+codigo = $httpparam_code ;
+dni = $httpparam_nif ;
+apellidos = $httpparam_lastName ;
+nombre = $httpparam_firstName ;
+
+SI (buscaPersonaPorDNI() == 0) ENTONCES
+  creaPersona();
+SINO
+  modificaPersona();
+FIN;
+
+// asigna empresa
+fecha_inicio = a_fecha(hoy());
+fecha_fin = $last_date ;
+ponEmpresa();
+
+// actualiza el estado
+// TODO: Evaluar con campo "isActive"
+fecha = a_fecha(hoy());
+SI ($httpparam_isActive == "false" O $httpparam_isActive == "False" O $httpparam_isActive == "0") ENTONCES
+  SI (getEstadoAlta(fecha) == 1) ENTONCES
+    ponBaja();
+  FIN;
+SINO
+  SI (getEstadoAlta(fecha) == 0) ENTONCES
+    ponAlta();
+  FIN;
+FIN;
+
+// procesa centros recursivamente
+$_error = "";
+lanzaInterfaz("api.employees.optionalData", "", "");
+
+// procesa centros recursivamente
+$_error = "";
+lanzaInterfaz("api.employees.accesosGD", "", "");
+
+SI ($_error == "") ENTONCES
+// retorna mensaje de respuesta
+$_response = "'Datos importados correctamente.'";
+lanzaInterfaz("api._raise_200", "", "");
+FIN;
+/####/Interfaz:accesosGD/####//** 
+  Da acceso a contratistas a los centros especificados
+  en el parametro "centers"
+*/
+
+SI ($httpparam_centers <> "") ENTONCES
+  // split de centros
+  $pos = buscaTexto($httpparam_centers, ",");
+  SI ($pos) ENTONCES
+    // obtiene el id y recorta la porción de texto
+    $splitted = quitaBlancos(recorta($httpparam_centers, 1, $pos -1));
+    $httpparam_centers = recorta($httpparam_centers, $pos +1, length($httpparam_centers));
+  SINO
+    // se entiende que existe 1 solo id
+    $splitted = quitaBlancos($httpparam_centers);
+    $httpparam_centers = "";
+  FIN ;
+  
+  // parse centros
+  $pos_dp = buscaTexto($splitted, ":");
+  SI ($pos_dp == 0) ENTONCES
+    $_error = "Error parsing centers.";
+    lanzaInterfaz("api._raise_400", "", "");
+  SINO
+    $parsed_center = recorta($splitted, 1, $pos_dp -1);
+    $parsed_date = recorta($splitted, $pos_dp +1, length($splitted));
+    
+    // busca el centro
+    SI (buscaCentro($parsed_center, 1) == 0) ENTONCES
+      $_error = "Center " + $parsed_center + " not found.";
+      lanzaInterfaz("api._raise_404", "", "");
+    SINO
+      // centro disponible en variable global centro
+      fecha_fin = a_fecha($parsed_date);
+      accesoDocumental(1);
+    FIN;
+  FIN;
+  
+  // llama a si mismo
+  SI ($_error == "") ENTONCES
+    lanzaInterfaz("api.employees.accesosGD", "", "");
+  FIN;
+FIN;
+/####/Interfaz:optionalData/####//** 
+  Importa datos opcionales recibido en el parametro
+  "optionalData".
+*/
+
+SI ($httpparam_optionalData <> "") ENTONCES
+  // split de centros
+  $pos = buscaTexto($httpparam_optionalData, ",");
+  SI ($pos) ENTONCES
+    // obtiene el id y recorta la porción de texto
+    $splitted = quitaBlancos(recorta($httpparam_optionalData, 1, $pos -1));
+    $httpparam_optionalData = recorta($httpparam_optionalData, $pos +1, length($httpparam_optionalData));
+  SINO
+    // se entiende que existe 1 solo id
+    $splitted = quitaBlancos($httpparam_optionalData);
+    $httpparam_optionalData = "";
+  FIN ;
+  
+  // parse centros
+  $pos_dp = buscaTexto($splitted, ":");
+  SI ($pos_dp == 0) ENTONCES
+    $_error = "Error parsing optional data.";
+    lanzaInterfaz("api._raise_400", "", "");
+  SINO
+    $parsed_id = recorta($splitted, 1, $pos_dp -1);
+    $parsed_value = recorta($splitted, $pos_dp +1, length($splitted));
+    
+    // actualiza dato
+    modificaDatoOpcional($parsed_value, a_entero($parsed_id));
+  FIN;
+  
+  // llama a si mismo
+  SI ($_error == "") ENTONCES
+    lanzaInterfaz("api.employees.accesosGD", "", "");
+  FIN;
+FIN;
+/####/Tarea:employee/####/lanzaInterfaz("api.logger", "", "");
+$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$httpresult = 200;
+$body = "{'result': 'getting/posting internal people'}";/####/Tarea:encae/####///lanzaInterfaz("api.logger", "", "");
+
+$_token_valid = 1 ;
 lanzaInterfaz("api.check_token", "", "");
 
 SI ($_token_valid == 0) ENTONCES
   $_error = "Credentials invalid or not provided.";
   lanzaInterfaz("api._raise_401", "", "");
 SINO
-  lanzaInterfaz("getForContractors", "", "");
+  SI ($httpmethod == "POST") ENTONCES
+    lanzaInterfaz("api.employees.importCAE", "", "");
+  SINO
+    // default
+    lanzaInterfaz("api._raise_405", "", "");
+  FIN;
 FIN;
-/####/Paquete:api.employees/####/Tarea:employee/####/lanzaInterfaz("api.logger", "", "");
+/####/Tarea:contractor/####/lanzaInterfaz("api.logger", "", "");
 $resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
 $httpresult = 200;
-$body = "{'result': 'getting/posting internal people'}";/####/Tarea:contractor/####/lanzaInterfaz("api.logger", "", "");
-$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$httpresult = 200;
-$body = "{'result': 'getting/posting contractor people'}";/####/Paquete:serializers/####/Paquete:serializers.employees/####/Interfaz:contractor/####/$a = 0;
+$body = "{'result': 'getting/posting contractor people'}";/####/Paquete:serializers/####/Paquete:serializers.employees/####/Interfaz:contractor/####//** 
+  Requiere: persona encontrada por buscaPersonaPorCodigo() o similar
+  
+  ** Solo serializa una persona
+*/
 
+SI ($_contractor_obj <> "[" Y $_contractor_obj <> "") ENTONCES
+  $_contractor_obj = $_contractor_obj + ", ";
+FIN;
+
+// set vars
+$_optionals_data = "[";
+$_optionals = "" + $httpparam_employeeData ;
+SI ($_optionals <> "") ENTONCES
+  lanzaInterfaz("serializers.generics.optionalData", "", "");
+FIN;
+$_optionals_data = $_optionals_data + "]";
+
+$_single = "{" +
+  "'code': " + campoPersona("codigo") + ", " +
+  "'mat': '" + campoPersona("matricula") + "', " +
+  "'card': '" + campoPersona("tarjeta") + "', " +
+  "'centerCode': '" + campoPersona("centro") + "', " +
+  "'centerDesc': '" + campoPersona("centro_desc") + "', " +
+  "'firstname': '" + campoPersona("nombre") + "', " +
+  "'lastName': '" + campoPersona("apellidos") + "', " +
+  "'dni': '" + campoPersona("dni") + "', " +
+  "'company': '" + campoPersona("empresa") + "', " +
+  "'optionalData': " + $_optionals_data +
+  "}";
+
+// return* single lista de objetos
+$_contractor_obj = $_contractor_obj + $_single ;
 /####/Paquete:serializers.clockings/####/Interfaz:contractor/####//**
 requiere:
   - fuente de datos tipo 1 (query)
@@ -164,9 +403,27 @@ SI ($_clockings_obj <> "[" Y $_clockings_obj <> "") ENTONCES
   $_clockings_obj = $_clockings_obj + ", ";
 FIN;
 
+
+SI ($_serialize_employee) ENTONCES
+  tipo_persona = campo("MARC_APP");
+  codigo = campo("MARC_PERS");
+  
+  SI (buscaPersonaPorCodigo()) ENTONCES
+    $_contractor_obj = "";
+    lanzaInterfaz("serializers.employees.contractor", "", "");
+  SINO
+    // persona no encontrada
+    $_contractor_obj = "{'code': " + campo("MARC_PERS") + "}";
+  FIN;
+  
+  $employee = $_contractor_obj ;
+SINO
+  $employee = campo("MARC_PERS");
+FIN;
+
 $_single = "{" +
   "'id': " + campo("MARC_COUNT") + ", " +
-  "'employee': " + campo("MARC_PERS") + ", " +
+  "'employee': " + $employee + ", " +
   "'type': " + campo("MARC_TIPO") + ", " +
   "'card': '" + campo("MARC_TARJ") + "', " +
   "'tmp': '" + campo("MARC_TMP") + "', " +
@@ -181,7 +438,50 @@ $_single = "{" +
   "}";
 
 // return* single lista de objetos
-$_clockings_obj = $_clockings_obj + $_single ;/####/Paquete:serializers.generics/####/Paquete:portal/####/Interfaz:botones_gestor/####/ SI ($sf=="0016") ENTONCES $mb="";SINO $mb="f=N|";FSI;
+$_clockings_obj = $_clockings_obj + $_single ;
+/####/Paquete:serializers.generics/####/Interfaz:optionalData/####//** 
+  Serializa los datos opcionales de una persona
+  segun indique la variable $_optionals
+  
+  La salida se serializa en $_optionals_data
+*/
+
+SI ($_optionals <> "") ENTONCES
+  $pos = buscaTexto($_optionals, ",");
+  SI ($pos) ENTONCES
+    // obtiene el id y recorta la porción de texto
+    $dato_id = quitaBlancos(recorta($_optionals, 1, $pos -1));
+    $_optionals = recorta($_optionals, $pos +1, length($_optionals));
+  SINO
+    // se entiende que existe 1 solo id
+    $dato_id = quitaBlancos($_optionals);
+    $_optionals = "";
+  FIN ;
+  
+  // get data value
+  $data_value = campoPersona("dato_opcional" + $dato_id);
+  
+  SI ($data_value <> "") ENTONCES
+    $single = "{" + 
+      "'id': " + $dato_id + ", " +
+      "'value': '" + campoPersona("dato_opcional" + $dato_id) + "'" +
+      "}";
+    $_optionals_data = $_optionals_data + $single ;
+  FIN;
+  
+  // mas datos por serializar
+  SI ($_optionals <> "") ENTONCES
+    // si tiene valor asignado
+    SI ($data_value <> "") ENTONCES
+      $_optionals_data = $_optionals_data + ", ";
+    FIN;
+    lanzaInterfaz("serializers.generics.optionalData", "", "");
+  FIN ;
+  
+SINO
+  //$_optionals_data = $_optionals_data + "]";
+FIN ;
+/####/Paquete:portal/####/Interfaz:botones_gestor/####/ SI ($sf=="0016") ENTONCES $mb="";SINO $mb="f=N|";FSI;
   ponComponente("0016_gen.html",str("mInformes",0),9,3,$mb+$i4);
 
  SI ($sf=="0022") ENTONCES $mb="";SINO $mb="f=N|";FSI;

@@ -1,0 +1,129 @@
+﻿Paquete:serializers/####/Paquete:serializers.employees/####/Interfaz:contractor/####//** 
+  Requiere: persona encontrada por buscaPersonaPorCodigo() o similar
+  
+  ** Solo serializa una persona
+*/
+
+SI ($_contractor_obj <> "[" Y $_contractor_obj <> "") ENTONCES
+  $_contractor_obj = $_contractor_obj + ", ";
+FIN;
+
+// set vars
+$_optionals_data = "[";
+$_optionals = "" + $httpparam_employeeData ;
+SI ($_optionals <> "") ENTONCES
+  lanzaInterfaz("serializers.generics.optionalData", "", "");
+FIN;
+$_optionals_data = $_optionals_data + "]";
+
+$_single = "{" +
+  "'code': " + campoPersona("codigo") + ", " +
+  "'mat': '" + campoPersona("matricula") + "', " +
+  "'card': '" + campoPersona("tarjeta") + "', " +
+  "'centerCode': '" + campoPersona("centro") + "', " +
+  "'centerDesc': '" + campoPersona("centro_desc") + "', " +
+  "'firstname': '" + campoPersona("nombre") + "', " +
+  "'lastName': '" + campoPersona("apellidos") + "', " +
+  "'dni': '" + campoPersona("dni") + "', " +
+  "'company': '" + campoPersona("empresa") + "', " +
+  "'optionalData': " + $_optionals_data +
+  "}";
+
+// return* single lista de objetos
+$_contractor_obj = $_contractor_obj + $_single ;
+/####/Paquete:serializers.clockings/####/Interfaz:contractor/####//**
+requiere:
+  - fuente de datos tipo 1 (query)
+  - vars: $_clockings_obj
+
+si se pasa una fuente con varios elementos, debe incluir manualmente
+preInterfaz => "[" y postInterfaz => "]"
+
+EJ:
+$_clockings_obj = "[";
+lanzaInterfaz("serializers.clockings.contractor", "clockings", "");
+$_clockings_obj = $_clockings_obj + "]";
+*/
+
+SI ($_clockings_obj <> "[" Y $_clockings_obj <> "") ENTONCES
+  $_clockings_obj = $_clockings_obj + ", ";
+FIN;
+
+
+SI ($_serialize_employee) ENTONCES
+  tipo_persona = campo("MARC_APP");
+  codigo = campo("MARC_PERS");
+  
+  SI (buscaPersonaPorCodigo()) ENTONCES
+    $_contractor_obj = "";
+    lanzaInterfaz("serializers.employees.contractor", "", "");
+  SINO
+    // persona no encontrada
+    $_contractor_obj = "{'code': " + campo("MARC_PERS") + "}";
+  FIN;
+  
+  $employee = $_contractor_obj ;
+SINO
+  $employee = campo("MARC_PERS");
+FIN;
+
+$_single = "{" +
+  "'id': " + campo("MARC_COUNT") + ", " +
+  "'employee': " + $employee + ", " +
+  "'type': " + campo("MARC_TIPO") + ", " +
+  "'card': '" + campo("MARC_TARJ") + "', " +
+  "'tmp': '" + campo("MARC_TMP") + "', " +
+  "'result': " + campo("MARC_RESULT") + ", " +
+  "'offline': " + campo("MARC_OFFLINE") + ", " +
+  "'gl': " + campo("MARC_GL") + ", " +
+  "'reader': " + campo("MARC_LECT") + ", " +
+  "'aux': '" + campo("MARC_AUX") + "', " +
+  "'value': " + campo("MARC_VAL") + ", " +
+  "'terminal': " + campo("MARC_TERM") + ", " +
+  "'version': " + campo("MARC_VERS") + "" +
+  "}";
+
+// return* single lista de objetos
+$_clockings_obj = $_clockings_obj + $_single ;
+/####/Paquete:serializers.generics/####/Interfaz:optionalData/####//** 
+  Serializa los datos opcionales de una persona
+  segun indique la variable $_optionals
+  
+  La salida se serializa en $_optionals_data
+*/
+
+SI ($_optionals <> "") ENTONCES
+  $pos = buscaTexto($_optionals, ",");
+  SI ($pos) ENTONCES
+    // obtiene el id y recorta la porción de texto
+    $dato_id = quitaBlancos(recorta($_optionals, 1, $pos -1));
+    $_optionals = recorta($_optionals, $pos +1, length($_optionals));
+  SINO
+    // se entiende que existe 1 solo id
+    $dato_id = quitaBlancos($_optionals);
+    $_optionals = "";
+  FIN ;
+  
+  // get data value
+  $data_value = campoPersona("dato_opcional" + $dato_id);
+  
+  SI ($data_value <> "") ENTONCES
+    $single = "{" + 
+      "'id': " + $dato_id + ", " +
+      "'value': '" + campoPersona("dato_opcional" + $dato_id) + "'" +
+      "}";
+    $_optionals_data = $_optionals_data + $single ;
+  FIN;
+  
+  // mas datos por serializar
+  SI ($_optionals <> "") ENTONCES
+    // si tiene valor asignado
+    SI ($data_value <> "") ENTONCES
+      $_optionals_data = $_optionals_data + ", ";
+    FIN;
+    lanzaInterfaz("serializers.generics.optionalData", "", "");
+  FIN ;
+  
+SINO
+  //$_optionals_data = $_optionals_data + "]";
+FIN ;
