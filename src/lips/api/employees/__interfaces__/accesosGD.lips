@@ -38,6 +38,4 @@ SI ($httpparam_centers <> "") ENTONCES
   
   // llama a si mismo
   SI ($_error == "") ENTONCES
-    lanzaInterfaz("api.employees.accesosGD", "", "");
-  FIN;
-FIN;
+    lanzaInterfaz("api.employees.accesosGD", "",Python not afk...
