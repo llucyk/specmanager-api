@@ -31,11 +31,17 @@ SI ($httpparam_centers <> "") ENTONCES
       lanzaInterfaz("api._raise_404", "", "");
     SINO
       // centro disponible en variable global centro
-      fecha_fin = a_fecha($parsed_date);
-      accesoDocumental(1);
+      // asigna o borra acceso desde hoy() hasta 20501231
+      SI (a_fecha($parsed_date) >= a_fecha(hoy())) ENTONCES
+        accesoDocumental(1);
+      SINO
+        accesoDocumental(0);
+      FIN;
     FIN;
   FIN;
   
-  // llama a si mismo
+    // llama a si mismo
   SI ($_error == "") ENTONCES
-    lanzaInterfaz("api.employees.accesosGD", "",Python not afk...
+    lanzaInterfaz("api.employees.accesosGD", "", "");
+  FIN;
+FIN;

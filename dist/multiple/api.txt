@@ -1,10 +1,11 @@
 ﻿Paquete:api/####/Interfaz:_raise_405/####/$httpresult = 405 ;
 $_error = "Method "+ $httpmethod +" is not allowed.";
 lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_raise_404/####/$httpresult = 404 ;
-lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:token_assign/####/// asigna token con fuente de datos
+lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_raise_40x/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+$body = "{'ok': false, 'error': '" + $_error + "'}";/####/Interfaz:token_assign/####/// asigna token con fuente de datos
 
-$_token = campo("STA_VAL");/####/Interfaz:_raise_40x/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
-$body = "{'ok': false, 'error': '" + $_error + "'}";/####/Interfaz:check_token/####/// requirements: httpheader_authorization
+$_token = campo("STA_VAL");/####/Interfaz:_raise_401/####/$httpresult = 401 ;
+lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:check_token/####/// requirements: httpheader_authorization
 // $_token_valid: Result of auth checks
 
 $_token = "";
@@ -21,8 +22,7 @@ SI ($httpheader_apikey == $_token) ENTONCES
 SINO
   $_token_valid = 0 ;
 FIN;
-/####/Interfaz:_raise_401/####/$httpresult = 401 ;
-lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_raise_400/####/$httpresult = 400 ;
+/####/Interfaz:_raise_400/####/$httpresult = 400 ;
 lanzaInterfaz("api._raise_40x", "", "");/####/Interfaz:_authReject/####/$resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
 $httpresult = 401 ;
 
@@ -151,7 +151,7 @@ $httpresult = 200;
 $body = "{'result': 'getting employee clockings'}";/####/Tarea:contractor/####///lanzaInterfaz("api.logger", "", "");
 
 $_token_valid = 1 ;
-//lanzaInterfaz("api.check_token", "", "");
+lanzaInterfaz("api.check_token", "", "");
 
 SI ($_token_valid == 0) ENTONCES
   $_error = "Credentials invalid or not provided.";
@@ -220,9 +220,23 @@ FIN;
 $_error = "";
 lanzaInterfaz("api.employees.optionalData", "", "");
 
+// fuerza fecha de fin
+fecha_fin = "20371231";
+
 // procesa centros recursivamente
 $_error = "";
 lanzaInterfaz("api.employees.accesosGD", "", "");
+
+// asigna comentario con param comment
+SI ($httpparam_comment <> "") ENTONCES
+  $text = $httpparam_comment;
+SINO
+  $text = "";
+FIN;
+$sql = "UPDATE PERSONAS SET PERS_COMENT1 = '" + $text + 
+  "' WHERE PERS_CODIGO = '" + codigo + 
+  "' AND PERS_TIPO = '6'";
+lanzaSql($sql);
 
 SI ($_error == "") ENTONCES
 // retorna mensaje de respuesta
@@ -262,12 +276,16 @@ SI ($httpparam_centers <> "") ENTONCES
       lanzaInterfaz("api._raise_404", "", "");
     SINO
       // centro disponible en variable global centro
-      fecha_fin = a_fecha($parsed_date);
-      accesoDocumental(1);
+      // asigna o borra acceso desde hoy() hasta 20501231
+      SI (a_fecha($parsed_date) >= a_fecha(hoy())) ENTONCES
+        accesoDocumental(1);
+      SINO
+        accesoDocumental(0);
+      FIN;
     FIN;
   FIN;
   
-  // llama a si mismo
+    // llama a si mismo
   SI ($_error == "") ENTONCES
     lanzaInterfaz("api.employees.accesosGD", "", "");
   FIN;

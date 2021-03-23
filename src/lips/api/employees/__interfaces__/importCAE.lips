@@ -54,9 +54,23 @@ FIN;
 $_error = "";
 lanzaInterfaz("api.employees.optionalData", "", "");
 
+// fuerza fecha de fin
+fecha_fin = "20371231";
+
 // procesa centros recursivamente
 $_error = "";
 lanzaInterfaz("api.employees.accesosGD", "", "");
+
+// asigna comentario con param comment
+SI ($httpparam_comment <> "") ENTONCES
+  $text = $httpparam_comment;
+SINO
+  $text = "";
+FIN;
+$sql = "UPDATE PERSONAS SET PERS_COMENT1 = '" + $text + 
+  "' WHERE PERS_CODIGO = '" + codigo + 
+  "' AND PERS_TIPO = '6'";
+lanzaSql($sql);
 
 SI ($_error == "") ENTONCES
 // retorna mensaje de respuesta

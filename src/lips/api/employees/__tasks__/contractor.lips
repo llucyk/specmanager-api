@@ -7,5 +7,8 @@ SI ($_token_valid == 0) ENTONCES
   $_error = "Credentials invalid or not provided.";
   lanzaInterfaz("api._raise_401", "", "");
 SINO
-  lanzaInterfaz("getForContractors", "", "");
+  lanzaInterfaz("api.logger", "", "");
+  $resp_headers="Content-Type:application/json|Content-Encoding:utf-8";
+  $httpresult = 200;
+  $body = "{'result': 'getting/posting contractor'}";
 FIN;
